@@ -1,0 +1,90 @@
+# MARK LIV — local / single-host stack: PostgreSQL + FastAPI backend + Next.js web.
+#
+#   docker compose up --build
+#   Web:  http://localhost:3000
+#   API:  http://localhost:8080/health   (docs at /docs)
+#
+# Configuration comes from the root `.env` file (never committed). Start by
+# copying `.env.example`; set strong POSTGRES_PASSWORD and JWT_SECRET values.
+#
+#   JWT_SECRET=$(python -c "import secrets;print(secrets.token_urlsafe(48))")
+#
+# Copy services/api/.env.example and apps/web/.env.example for non-Docker runs.
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: markliv
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: mark_liv
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U markliv -d mark_liv"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./services/api
+    restart: unless-stopped
+    environment:
+      ENVIRONMENT: ${ENVIRONMENT:-development}
+      DATABASE_URL: postgresql+asyncpg://markliv:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@db:5432/mark_liv
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env — see the header of this file}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      AI_PROVIDER: ${AI_PROVIDER:-gemini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_TEXT_MODEL: ${GEMINI_TEXT_MODEL:-gemini-2.5-flash}
+      EMAIL_BACKEND: ${EMAIL_BACKEND:-console}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-no-reply@mark-liv.local}
+      SMTP_USE_TLS: ${SMTP_USE_TLS:-true}
+      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:3000}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      # Readiness, not liveness: only healthy once the database answers.
+      # `2>/dev/null` hides the connection-refused traceback while it warms up.
+      test:
+        [
+          "CMD-SHELL",
+          "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8080/health/ready',timeout=4).status==200 else 1)\" 2>/dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+
+  web:
+    build:
+      context: ./apps/web
+      args:
+        # Inlined into the client bundle at build time — the browser connects
+        # to the API directly for live voice, so this must be a browser-reachable
+        # origin (ws:// for local, wss:// behind TLS).
+        NEXT_PUBLIC_API_WS_URL: ${NEXT_PUBLIC_API_WS_URL:-ws://localhost:8080}
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080}
+        NEXT_PUBLIC_APP_NAME: ${NEXT_PUBLIC_APP_NAME:-MARK LIV}
+    restart: unless-stopped
+    environment:
+      # Server-side proxy target — service DNS name, only used inside the network.
+      API_BASE_URL: http://api:8080
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:

@@ -1,0 +1,6 @@
+# Build-time only — packaging the desktop app. The app itself runs on
+# requirements.txt; nothing here is needed at runtime.
+#
+# Bounded on purpose: a PyInstaller major release changes hooks and bundle
+# layout, which is exactly the thing packaging is sensitive to.
+pyinstaller>=6.10,<7
