@@ -1979,10 +1979,22 @@ class JarvisLive:
                     self.ui.write_log(
                         f"SYS: News unavailable — backend returned: {news_text[:120]!r}"
                     )
-                    p2 = (
-                        "News headlines could not be fetched right now. "
-                        f"Let the user know briefly.{lang_str}"
-                    )
+                    # Run diagnostics to identify the actual cause
+                    try:
+                        from actions.diagnostics import check_news_provider
+                        diag_result = check_news_provider({})
+                        self.ui.write_log(f"SYS: News diagnostic: {diag_result}")
+                        p2 = (
+                            f"News headlines could not be fetched. "
+                            f"Diagnostic check: {diag_result} "
+                            f"Let the user know briefly.{lang_str}"
+                        )
+                    except Exception as diag_e:
+                        self.ui.write_log(f"SYS: News diagnostic failed: {diag_e}")
+                        p2 = (
+                            "News headlines could not be fetched right now. "
+                            f"Let the user know briefly.{lang_str}"
+                        )
 
                 await self.session.send_client_content(
                     turns={"role": "user", "parts": [{"text": p2}]},

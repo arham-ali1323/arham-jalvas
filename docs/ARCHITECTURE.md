@@ -333,7 +333,7 @@ These are catalogued for triage in `IMPLEMENTATION_PLAN.md`.
 A monorepo with three deployable components plus shared assets.
 
 ```
-Mark-LV/
+Arham-Jalvas/
 ├── apps/
 │   ├── web/        Next.js App Router + TS + Tailwind + shadcn/ui + Framer Motion  (Vercel)
 │   └── desktop/    existing Python + PyQt6 app (moved here incrementally)

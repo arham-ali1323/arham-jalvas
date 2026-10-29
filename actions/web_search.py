@@ -138,8 +138,10 @@ def _ddg_search(query: str, max_results: int = 6) -> list[dict]:
                     "snippet": r.get("body",   ""),
                     "url":     r.get("href",   ""),
                 })
+    except ImportError as e:
+        print(f"[WebSearch] ⚠️ DDG text() failed - missing dependency ({e})")
     except Exception as e:
-        print(f"[WebSearch] ⚠️ DDG text() failed: {e}")
+        print(f"[WebSearch] ⚠️ DDG text() failed ({type(e).__name__}: {e})")
     return results
 
 
@@ -156,8 +158,10 @@ def _ddg_news(query: str, max_results: int = 8) -> list[dict]:
                     "url":     r.get("url",    ""),
                     "source":  r.get("source", ""),
                 })
+    except ImportError as e:
+        print(f"[WebSearch] ⚠️ DDG news() failed - missing dependency ({e}) — falling back to text search")
     except Exception as e:
-        print(f"[WebSearch] ⚠️ DDG news() failed ({e}) — falling back to text search")
+        print(f"[WebSearch] ⚠️ DDG news() failed ({type(e).__name__}: {e}) — falling back to text search")
     # Also covers the legacy-package case, where news() returns an empty list
     # instead of raising.
     if not results:

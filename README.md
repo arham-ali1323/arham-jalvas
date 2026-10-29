@@ -274,8 +274,8 @@ It is held in memory only, deliberately: writing it to disk would make a fresh l
 ## ⚡ Quick Start
 
 ```bash
-git clone https://github.com/FatihMakes/Mark-LV.git
-cd Mark-LV
+git clone https://github.com/FatihMakes/Arham-Jalvas.git
+cd Arham-Jalvas
 python setup.py        # installs deps for YOUR OS + the browser automation engine
 python main.py
 ```
