@@ -1,21 +1,12 @@
 {
-  "builds": [
+  "rewrites": [
     {
-      "src": "services/api/app/main.py",
-      "use": "@vercel/python"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/services/api/app/main.py"
+      "source": "/api/:path*",
+      "destination": "https://YOUR_API_PROJECT_NAME.vercel.app/api/:path*"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "source": "/(.*)",
+      "destination": "https://YOUR_WEB_PROJECT_NAME.vercel.app/:path*"
     }
   ]
 }
