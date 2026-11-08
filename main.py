@@ -2472,6 +2472,13 @@ class JarvisLive:
             await asyncio.sleep(delay)
 
 def main():
+    # Check permissions on startup
+    try:
+        from core.permissions import PermissionChecker
+        PermissionChecker.print_status()
+    except Exception as e:
+        print(f"[Permissions] Could not check permissions: {e}")
+
     ui = JarvisUI("face.png")
 
     def runner():

@@ -19,6 +19,7 @@ SAFE_DIAGNOSTICS = {
     "check_dependencies": True,
     "list_files": True,
     "read_file": True,  # Read-only, safe
+    "check_permissions": True,  # Check system permissions
 }
 
 
@@ -158,6 +159,56 @@ def read_file(parameters: dict = None, **kwargs) -> str:
         return f"Read file failed: {type(e).__name__}: {e}"
 
 
+def check_permissions(parameters: dict = None, **kwargs) -> str:
+    """Check MARK LIV's system permissions."""
+    try:
+        from core.permissions import PermissionChecker
+
+        status = "\nMARK LIV Permission Status:\n"
+        status += "-" * 40 + "\n"
+
+        # Admin
+        admin = PermissionChecker.is_admin()
+        status += f"Administrator: {'✅ Yes' if admin else '❌ No'}\n"
+
+        # Microphone
+        mic_ok, mic_msg = PermissionChecker.check_microphone()
+        status += f"Microphone: {mic_msg}\n"
+
+        # Speaker
+        spk_ok, spk_msg = PermissionChecker.check_speaker()
+        status += f"Speaker: {spk_msg}\n"
+
+        # Camera
+        cam_ok, cam_msg = PermissionChecker.check_camera()
+        status += f"Camera: {cam_msg}\n"
+
+        # File Access
+        file_ok, file_msg = PermissionChecker.check_file_access()
+        status += f"File Access: {file_msg}\n"
+
+        # Network
+        net_ok, net_msg = PermissionChecker.check_network()
+        status += f"Network: {net_msg}\n"
+
+        # Gemini API
+        api_ok, api_msg = PermissionChecker.check_gemini_api()
+        status += f"Gemini API: {api_msg}\n"
+
+        status += "-" * 40 + "\n"
+
+        # Summary
+        all_required = admin and mic_ok and spk_ok and file_ok and net_ok and api_ok
+        if all_required:
+            status += "✅ All required permissions are granted!"
+        else:
+            status += "⚠️  Some permissions are missing. Run 'python setup_permissions.py' to grant them."
+
+        return status
+    except Exception as e:
+        return f"Permission check failed: {type(e).__name__}: {e}"
+
+
 def dev_helper(parameters: dict = None, **kwargs) -> str:
     """
     Run safe development assistance operations.
@@ -178,6 +229,7 @@ def dev_helper(parameters: dict = None, **kwargs) -> str:
         "check_dependencies": check_dependencies,
         "list_files": list_files,
         "read_file": read_file,
+        "check_permissions": check_permissions,
     }
 
     if action not in SAFE_DIAGNOSTICS:
@@ -193,13 +245,13 @@ def dev_helper(parameters: dict = None, **kwargs) -> str:
 # Tool declaration for action_loader auto-discovery
 TOOL = {
     "name": "dev_helper",
-    "description": "Run safe development assistance diagnostics. Actions: check_news, check_logs, check_imports, check_dependencies, list_files, read_file. All actions are read-only and safe. For list_files: provide directory. For read_file: provide file_path.",
+    "description": "Run safe development assistance diagnostics. Actions: check_news, check_logs, check_imports, check_dependencies, list_files, read_file, check_permissions. All actions are read-only and safe. For list_files: provide directory. For read_file: provide file_path.",
     "parameters": {
         "type": "OBJECT",
         "properties": {
             "action": {
                 "type": "STRING",
-                "description": "Action to perform: check_news, check_logs, check_imports, check_dependencies, list_files, read_file"
+                "description": "Action to perform: check_news, check_logs, check_imports, check_dependencies, list_files, read_file, check_permissions"
             },
             "directory": {
                 "type": "STRING",
